@@ -2,6 +2,7 @@ module Utility where
 
 import Data.Maybe
 import Text.Read
+
   --Colourize: adds code to text to colourize when it is printed
   -- I wrote this with color info taken from  http://www.markhneedham.com/blog/2012/04/29/haskell-colour-highlighting-when-writing-to-the-shell/
 

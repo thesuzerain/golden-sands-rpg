@@ -14,14 +14,14 @@ battleLoopInit player opponent =
 humanIntWithAPCheck :: Integer -> Integer -> IO Integer
 humanIntWithAPCheck limit currAP = do
     response <- humanInt limit
-    if (apCostOfAMove response) < currAP then do return(response)
+    if (apCostOfAMove response) <= currAP then do return(response)
       else do
         putStrLn $ "Not enough AP. Please select a different option."
         val <- humanIntWithAPCheck limit currAP
         return(val)
 
 
-battleLoop :: PlayerData -> PlayerData -> Integer -> Integer -> Integer -> ItemName -> Integer -> Integer -> ItemName -> IO Bool
+battleLoop :: PlayerData -> PlayerData -> Integer -> Integer -> Integer -> ItemName -> Integer -> Integer -> ItemName -> IO (PlayerData,IO Bool)
 battleLoop player opponent frame c1 d1 i1 c2 d2 i2 = do
   putStrLn "boing"
 
@@ -32,7 +32,7 @@ battleLoop player opponent frame c1 d1 i1 c2 d2 i2 = do
   let levelUp = if frame==10 && (willLevelUpTo player opponent) == (level player) then 0 else (willLevelUpTo player opponent)
   doActionText frame player levelUp (experience opponent) (currency opponent)
   doEndLinesText
-  response <- humanIntWithAPCheck (if frame == 2 then (fromIntegral (length (items player))) else 3) (if frame == 1 then (ap player) else 100000000)
+  response <- humanIntWithAPCheck (if frame == 1 && (level player)<5 then 1 else if frame == 1 && (level player)<10 then 2 else if frame == 2 then (fromIntegral (length (items player))) else 3) (if frame == 1 then (ap player) else 100000000)
   putStrLn "hoog"
   putStrLn $ show response
   let oppresponse = 0
@@ -40,11 +40,12 @@ battleLoop player opponent frame c1 d1 i1 c2 d2 i2 = do
 --  let (aF,bF,cF,dF,eF,fF,gF,hF) = if (dexterity player)>(dexterity opponent) then (responseFrame (a,b,c,d,e,f,g,h) frame oppresponse True)  else (responseFrame (a,b,c,d,e,f,g,h) frame response False)
   (a,b,c,d,e,f,g,h) <- if (dexterity player)>(dexterity opponent) then (responseFrame (player,opponent,c1,d1,i1,c2,d2,i2) frame response False)  else (responseFrame (player,opponent,c1,d1,i1,c2,d2,i2) frame oppresponse True)
   (aF,bF,cF,dF,eF,fF,gF,hF) <- if (dexterity player)>(dexterity opponent) then (responseFrame (a,b,c,d,e,f,g,h) frame oppresponse True)  else (responseFrame (a,b,c,d,e,f,g,h) frame response False)
-  let finalPlayer = if frame==10 then (getNewEXPPlayer aF bF True) else if frame == 11 then (getNewEXPPlayer aF bF False) else aF
+  let finalPlayer = if frame==10 then (getNewEXPPlayer aF bF False) else if frame == 11 then (getNewEXPPlayer aF bF True) else do aF
+  putStrLn $ show frame
   let newFrame = (fromIntegral (getNewFrame (fromIntegral frame) finalPlayer bF (fromIntegral response)))
   if newFrame == 12
     then do
-      return(False)
+      return(finalPlayer,getIOBool False)
     else do
       battleLoop finalPlayer bF newFrame cF dF eF fF gF hF
 
@@ -55,11 +56,16 @@ willLevelUpTo :: PlayerData -> PlayerData -> Integer
 willLevelUpTo player opponent = if (experience player) > ((level player) * 10) then (level player) + 1 else (level player)
 
 getNewEXPPlayer ::  PlayerData -> PlayerData -> Bool -> PlayerData
-getNewEXPPlayer attacker opponent didLose = (PlayerData (name attacker) (playerClass attacker) (hp attacker) (maxHP attacker) (ap attacker) (maxAP attacker) newLvl (attack attacker) (defense attacker) (intelligence attacker) (dexterity attacker) newCurrency newEXP (items attacker))
+getNewEXPPlayer attacker opponent didLose = (PlayerData (name attacker) (playerClass attacker) (hp attacker) (maxHP attacker) (ap attacker) (maxAP attacker) newLvl newAtk newDef newInt newDex newCurrency newEXP (items attacker))
   where
     newLvl = (willLevelUpTo attacker opponent)
     newEXP = if newLvl == (level attacker) then ((experience opponent)+(experience attacker)) else 0
     newCurrency = if didLose then (currency attacker) - (currency opponent) else (currency attacker) + (currency opponent)
+    (a,b,c,d) = getStatTuple (playerClass attacker)
+    newAtk = if newLvl == (level attacker) then (attack attacker) else (attack attacker) + a
+    newDef = if newLvl == (level attacker) then (defense attacker) else (defense attacker) + b
+    newInt = if newLvl == (level attacker) then (intelligence attacker) else (intelligence attacker) + c
+    newDex = if newLvl == (level attacker) then (dexterity attacker) else (dexterity attacker) + d
 
 responseFrame :: (PlayerData, PlayerData, Integer, Integer, ItemName, Integer, Integer, ItemName) -> Integer -> Integer -> Bool -> IO (PlayerData, PlayerData, Integer, Integer, ItemName, Integer, Integer, ItemName)
 responseFrame (player,opponent,c1,d1,i1,c2,d2,i2) frame response isOpponent
@@ -111,9 +117,9 @@ apCostOfAMove n
 baseDamageFromToFor :: PlayerData -> PlayerData -> Integer -> Integer
 baseDamageFromToFor attacker enemy select
 -- | (rotateClassFor (playerClass attacker) attackNumber)==Melee = ((fromIntegral (attack attacker)/(fromIntegral (defense enemy)))) + attackNumber*2
-  | (rotateClassFor (playerClass attacker) attackNumber)==Melee = ((attack attacker) `div` (defense enemy)) + attackNumber*2
-  | (rotateClassFor (playerClass attacker) attackNumber)==Range = ((intelligence attacker) `div` (defense enemy))  + attackNumber*2
-  | (rotateClassFor (playerClass attacker) attackNumber)==Magic = ((attack attacker) `div` (dexterity enemy))  + attackNumber*2
+  | (rotateClassFor (playerClass attacker) attackNumber)==Melee = ((attack attacker) `div` (defense enemy)) + 2*attackNumber^2
+  | (rotateClassFor (playerClass attacker) attackNumber)==Range = ((intelligence attacker) `div` (defense enemy))  + 2*attackNumber^2
+  | (rotateClassFor (playerClass attacker) attackNumber)==Magic = ((attack attacker) `div` (dexterity enemy))  + 2*attackNumber^2
   | otherwise = 1
   where attackNumber = select + 1
 
@@ -195,8 +201,8 @@ doActionText frame player levelUp newExp newCurrency
       let atk4 = if (playerClass player) == Melee then "Herculean Fist (/.r10AP/.0)" else if (playerClass player) == Range then "Tankbuster (/.r10AP/.0)" else "Divine Retribution (/.r10AP/.0)"
 
       let buildStr = "\""++atk1++"\" (/.b0/.0), \""++atk2++"\" (/.b1/.0)"
-      let buildStr1 = if ((level player) > 5) then buildStr ++ ", \""++atk3++"\" (/.b2/.0)" else buildStr
-      let buildStr2 = if ((level player) > 10) then buildStr1 ++ ", \""++atk4++"\" (/.b2/.0)" else buildStr1
+      let buildStr1 = if ((level player) >= 5) then buildStr ++ ", \""++atk3++"\" (/.b2/.0)" else buildStr
+      let buildStr2 = if ((level player) >= 10) then buildStr1 ++ ", \""++atk4++"\" (/.b2/.0)" else buildStr1
       putStrLn $ colourize $ buildStr2
 
   | frame == 2 = do
@@ -257,3 +263,12 @@ thisManySpaces :: Int -> [Char]
 thisManySpaces n
   | n == 0 = []
   | otherwise = ' ':(thisManySpaces (n - 1))
+
+
+
+{-getAIFromTree attacker enemy =
+    decide D  { dName = "", attributes = [(ap,show (ap attacker)),
+              (aiclass,show (playerClass attacker)),
+              (playerclass,show (playerClass enemy)),
+              (recommendedatk,"0")]}
+-}

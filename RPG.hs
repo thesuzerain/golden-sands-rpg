@@ -5,6 +5,7 @@ import System.Console.ANSI
 import Player
 import Utility
 import Shop
+import BattleDT
 import Battle
 -- To run it, try:
 -- ghci
@@ -138,10 +139,10 @@ run player = do
 
   humanMove <- humanInt 3
   computerMove <- computerSelect
-
-  randomOpp <- (getRandomOpponent 1)
+  tempRand <- randomRIO(-1,1)
+  randomOpp <- (getRandomOpponent (max 1 ((level player)+tempRand)))
   (newPlayer,termiTemp) <-  case humanMove of
-                            0 -> do return(player,battleLoopInit player randomOpp)
+                            0 -> battleLoopInit player randomOpp
                             1 -> startShop player
                             2 -> do return(player,(displayPlayerData player))
                             3 -> do return(player,getIOBool True)
@@ -157,14 +158,14 @@ getRandomOpponent level = do
   let listOfTypes=[Melee,Range,Magic]
   rintfortype <- randomRIO(0,(length listOfTypes) - 1)
   hp <- (getNewHP (listOfTypes !! rintfortype) level)
-  ap <- (getNewHP (listOfTypes !! rintfortype) level)
-  currency <- randomRIO(1,50)
-  expe <- randomRIO(1,50)
+  ap <- (getNewAP (listOfTypes !! rintfortype) level)
+  currency <- randomRIO(1,20*level)
+  expe <- randomRIO(1,10*level)
   atk <- (getNewStat (listOfTypes !! rintfortype) Attack level)
   def <- (getNewStat (listOfTypes !! rintfortype) Defense level)
   int <- (getNewStat (listOfTypes !! rintfortype) Intelligence level)
   dex <- (getNewStat (listOfTypes !! rintfortype) Dexterity level)
-  return(PlayerData (listOfNames !! rintforname) (listOfTypes !! rintfortype) hp hp 15 15 level atk def int dex currency expe [])
+  return(PlayerData (listOfNames !! rintforname) (listOfTypes !! rintfortype) hp hp ap ap level atk def int dex currency expe [])
 
 battle :: Integer -> Integer -> IO()
 battle player opponent = do
@@ -184,3 +185,10 @@ functionBreak val player opponent
   | val >= 1 = battle player opponent
   | val == 1 = main
 --}
+
+testAI = do
+  opp1 <-  (getRandomOpponent 1)
+  opp2 <- (getRandomOpponent 1)
+  putStrLn $ show (Player.ap opp1)
+  putStrLn $ show (Player.ap opp2)
+  return(getAIFromTree opp1 opp2)

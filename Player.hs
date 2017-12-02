@@ -1,6 +1,6 @@
 module Player where
 import System.Random
-import Utility  
+import Utility
 
 
 data PlayerData = PlayerData
@@ -33,6 +33,10 @@ getClass = do
         2 -> return Magic
 
          --fmap (toEnum . read) getLine
+
+getNewAP typ lvl = do
+    putStrLn $ show (4+lvl)
+    return(4+lvl)
 
 getNewHP :: Type -> Integer -> IO Integer
 getNewHP typ lvl
