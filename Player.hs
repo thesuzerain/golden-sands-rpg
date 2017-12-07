@@ -75,3 +75,7 @@ getStatFromTuple (a,b,c,d) lvl stat
     | stat == Dexterity = do
         m <- randomRIO(-1,1)
         return (m + (d*lvl))
+
+
+healPlayer :: PlayerData -> PlayerData
+healPlayer player = (PlayerData (name player) (playerClass player) (maxHP player) (maxHP player) (maxAP player) (maxHP player) (level player) (attack player) (defense player) (intelligence player) (dexterity player) (currency player) (experience player) (items player))

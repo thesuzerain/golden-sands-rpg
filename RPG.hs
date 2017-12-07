@@ -148,7 +148,7 @@ run player = do
                             3 -> do return(player,getIOBool True)
   terminateLoop <- termiTemp
 
-  if terminateLoop == True then putStrLn ("Thank you for playing!") else run newPlayer
+  if terminateLoop == True then putStrLn ("Thank you for playing!") else run (healPlayer newPlayer)
 
 
 

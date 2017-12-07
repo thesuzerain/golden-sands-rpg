@@ -87,7 +87,7 @@ updateForPotion attacker enemy attackNumber = (d1, (PlayerData (name attacker) (
     where
       retHP = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (max ((hp attacker) + 20) (maxHP attacker)) else (hp attacker)
       retAP = if (fst ((items attacker) !! (fromIntegral attackNumber))) == APotion then (max ((ap attacker) + 10) (maxAP attacker)) else (ap attacker)
-      d1 = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (retHP - (hp attacker)) else (retHP - (ap attacker))
+      d1 = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (max (retHP - (hp attacker)) (maxHP attacker)) else (retHP - (ap attacker))
       retItems = delItem (items attacker) (fromIntegral attackNumber)
 
 delItem :: [(ItemName, Integer)] -> Integer -> [(ItemName, Integer)]
@@ -129,7 +129,7 @@ getNewFrame frame player opponent r
   | frame == 11 = 12
   | (hp opponent) < 1 = 10
   | (hp player) < 1 = 11
-  | frame == 0 = if r == 0 then 1 else if r == 1 then 2 else if r == 2 then 3 else 0
+  | frame == 0 = if r == 0 then 1 else if r == 1 then 2 else if r == 2 then 11 else 0
   | frame == 1 = 0
   | otherwise = 0
 
