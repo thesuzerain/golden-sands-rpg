@@ -108,7 +108,7 @@ displayPlayerData player = do
   putStrLn $ colourize $ "Attack:/.b"++ show (attack player)++ "/.0 - - - - - Defense: /.y"++ show (defense player)++ "/.0 "
   putStrLn $ colourize $ "Intelligence:/.b"++ show (intelligence player)++ "/.0 - - - - - Dexterity: /.y"++ show (dexterity player)++ "/.0 "
   putStrLn $ " "
-  putStrLn $ colourize $ (buildItemStringForPlayer (items player) (length (items player)))
+  putStrLn $ colourize $ (buildItemStringForPlayer (items player) 1)
   putStrLn $ " "
   putStrLn $ colourize $ "Enter (/.b0/.0) to continue..."
   putStrLn "======================================="

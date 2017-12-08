@@ -85,9 +85,9 @@ potionFrameHelper (player,opponent,c1,d1,i1,c2,d2,i2) frame response =
 updateForPotion :: PlayerData -> PlayerData -> Integer  -> (Integer, PlayerData)
 updateForPotion attacker enemy attackNumber = (d1, (PlayerData (name attacker) (playerClass attacker) retHP (maxHP attacker) retAP (maxAP attacker) (level attacker) (attack attacker) (defense attacker) (intelligence attacker) (dexterity attacker) (currency attacker) (experience attacker) retItems))
     where
-      retHP = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (max ((hp attacker) + 20) (maxHP attacker)) else (hp attacker)
-      retAP = if (fst ((items attacker) !! (fromIntegral attackNumber))) == APotion then (max ((ap attacker) + 10) (maxAP attacker)) else (ap attacker)
-      d1 = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (max (retHP - (hp attacker)) (maxHP attacker)) else (retHP - (ap attacker))
+      retHP = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (min ((hp attacker) + 20) (maxHP attacker)) else (hp attacker)
+      retAP = if (fst ((items attacker) !! (fromIntegral attackNumber))) == APotion then (min ((ap attacker) + 10) (maxAP attacker)) else (ap attacker)
+      d1 = if (fst ((items attacker) !! (fromIntegral attackNumber))) == HPotion then (retHP - (hp attacker)) else (retAP - (ap attacker))
       retItems = delItem (items attacker) (fromIntegral attackNumber)
 
 delItem :: [(ItemName, Integer)] -> Integer -> [(ItemName, Integer)]
@@ -172,7 +172,7 @@ doLastAttackText player opponent c1 d1 i1 c2 d2 i2 = do
           doLastAttack2 player opponent c1 d1 i1 c2 d2 i2
 
         else do
-          putStrLn $ colourize $ "Used the " ++ show i1 ++ " for "++show d1++" HP!"
+          putStrLn $ colourize $ "Used the " ++ show i1 ++ " for "++show d1++"!"
           doLastAttack2 player opponent c1 d1 i1 c2 d2 i2
 
 
@@ -207,7 +207,7 @@ doActionText frame player levelUp newExp newCurrency
 
   | frame == 2 = do
       putStrLn $ colourize $ "Select an Item to use or press (/.b0/.0) to cancel: "
-      putStrLn $ colourize $ (buildItemString (items player) (length (items player)))
+      putStrLn $ colourize $ (buildItemString (items player) 1)
   | frame == 3 = putStrLn $ ""
   | frame == 4 = putStrLn $ ""
   | frame == 5 = putStrLn $ ""
@@ -225,12 +225,12 @@ doEndLinesText = do
 
 buildItemString items size
   | items == [] = ""
-  | otherwise =  (buildItemString (tail items) (size - 1)) ++"(/.r"++show (fst (head items))++" x"++show (snd (head items))++"/.0) (/.b"++show size++"/.0)   "
+  | otherwise =  (buildItemString (tail items) (size + 1)) ++"(/.r"++show (fst (head items))++" x"++show (snd (head items))++"/.0) (/.b"++show size++"/.0)   "
 
 
 buildItemStringForPlayer items size
     | items == [] = ""
-    | otherwise =  (buildItemString (tail items) (size - 1)) ++"(/.r"++show (fst (head items))++" x"++show (snd (head items))++"/.0) "
+    | otherwise =  (buildItemString (tail items) (size + 1)) ++"(/.r"++show (fst (head items))++" x"++show (snd (head items))++"/.0) "
 
 getHPBar :: Integer -> Integer -> [Char]
 getHPBar currHP maxHP
